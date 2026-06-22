@@ -1,0 +1,240 @@
+import 'package:flutter/material.dart';
+
+import '../widgets/dashboard_card.dart';
+
+import '../../debts/pages/debt_page.dart';
+import '../../creances/pages/creances_page.dart';
+import '../../finances/pages/finances_page.dart';
+import '../../finances/services/transaction_service.dart';
+import '../../notes/pages/notes_page.dart';
+
+
+import '../../savings/pages/savings_page.dart';
+
+import '../../projects/pages/projects_page.dart';
+import '../../calendar/pages/calendar_page.dart';
+import '../../settings/pages/settings_page.dart';
+
+class DashboardPage extends StatelessWidget {
+  const DashboardPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final solde =
+        TransactionService.getSolde();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
+      appBar: AppBar(
+        title: const Text(
+          'OneLife',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Bonjour 👋',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 5),
+
+            Text(
+              'Bienvenue dans OneLife',
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontSize: 15,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Container(
+              width: double.infinity,
+              padding:
+                  const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                borderRadius:
+                    BorderRadius.circular(
+                  20,
+                ),
+                gradient:
+                    const LinearGradient(
+                  colors: [
+                    Color(0xFF2563EB),
+                    Color(0xFF1E40AF),
+                  ],
+                ),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'SOLDE GLOBAL',
+                    style: TextStyle(
+                      color:
+                          Colors.white70,
+                      fontSize: 14,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 10,
+                  ),
+
+                  Text(
+                    '${solde.toStringAsFixed(0)} FCFA',
+                    style:
+                        const TextStyle(
+                      color:
+                          Colors.white,
+                      fontSize: 36,
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
+            GridView.count(
+              shrinkWrap: true,
+              physics:
+                  const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              childAspectRatio: 2.2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              children: [
+                DashboardCard(
+                  icon: Icons
+                      .account_balance_wallet,
+                  title: 'Finances',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const FinancesPage(),
+                      ),
+                    );
+                  },
+                ),
+
+               DashboardCard(
+  icon: Icons.savings,
+  title: 'Épargne',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const SavingsPage(),
+      ),
+    );
+  },
+),
+
+                DashboardCard(
+                  icon: Icons.handshake,
+                  title: 'Dettes',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const DebtsPage(),
+                      ),
+                    );
+                  },
+                ),
+
+                DashboardCard(
+                  icon: Icons.payments,
+                  title: 'Créances',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const CreancesPage(),
+                      ),
+                    );
+                  },
+                ),
+
+                DashboardCard(
+  icon: Icons.rocket_launch,
+  title: 'Projets',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const ProjectsPage(),
+      ),
+    );
+  },
+),
+
+               DashboardCard(
+  icon: Icons.note_alt,
+  title: 'Notes',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const NotesPage(),
+      ),
+    );
+  },
+),
+
+               DashboardCard(
+  icon: Icons.calendar_month,
+  title: 'Calendrier',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CalendarPage(),
+      ),
+    );
+  },
+),
+                DashboardCard(
+  icon: Icons.settings,
+  title: 'Paramètres',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const SettingsPage(),
+      ),
+    );
+  },
+),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
