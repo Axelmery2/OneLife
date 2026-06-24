@@ -7,9 +7,11 @@ import '../modules/notes/models/note.dart';
 import '../modules/savings/models/saving.dart';
 import '../modules/projects/models/project.dart';
 import '../modules/calendar/models/event.dart';
+import '../models/user_profile.dart';
 
 class HiveService {
   static const String settingsBox = 'settings';
+  static const String profileBox = 'profile';
   static const String transactionsBox = 'transactions';
   static const String savingsBox = 'savings';
   static const String debtsBox = 'debts';
@@ -28,6 +30,12 @@ class HiveService {
     if (!Hive.isBoxOpen(settingsBox)) {
       await Hive.openBox(settingsBox);
     }
+
+    if (!Hive.isBoxOpen(profileBox)) {
+  await Hive.openBox<UserProfile>(
+    profileBox,
+  );
+}
 
     if (!Hive.isBoxOpen(transactionsBox)) {
       await Hive.openBox<Transaction>(
@@ -77,6 +85,12 @@ class HiveService {
   static Box getSettingsBox() =>
       Hive.box(settingsBox);
 
+  static Box<UserProfile>
+    getProfileBox() =>
+        Hive.box<UserProfile>(
+          profileBox,
+        );
+
   static Box<Transaction>
       getTransactionsBox() =>
           Hive.box<Transaction>(
@@ -110,6 +124,8 @@ static Box<Project>
           projectsBox,
         );
 
-  static Box getEventsBox() =>
-      Hive.box(eventsBox);
+  static Box<Event> getEventsBox() =>
+      Hive.box<Event>(
+        eventsBox,
+      );
 }

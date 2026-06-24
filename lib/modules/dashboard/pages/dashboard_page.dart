@@ -15,6 +15,9 @@ import '../../projects/pages/projects_page.dart';
 import '../../calendar/pages/calendar_page.dart';
 import '../../settings/pages/settings_page.dart';
 
+import '../../../services/hive_service.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
@@ -23,6 +26,7 @@ class DashboardPage extends StatelessWidget {
     final solde =
         TransactionService.getSolde();
 
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -42,14 +46,27 @@ class DashboardPage extends StatelessWidget {
           crossAxisAlignment:
               CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Bonjour 👋',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          ValueListenableBuilder(
+  valueListenable:
+      HiveService.getProfileBox()
+          .listenable(),
+  builder: (
+    context,
+    box,
+    child,
+  ) {
+    final profile =
+        box.getAt(0);
 
+    return Text(
+      'Bonjour ${profile?.displayName ?? "Utilisateur"} 👋',
+      style: const TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  },
+),
             const SizedBox(height: 5),
 
             Text(
