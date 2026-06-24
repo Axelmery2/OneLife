@@ -74,12 +74,10 @@ mainAxisAlignment:
 MainAxisAlignment
 .center,
 children: [
-const Icon(
-Icons.favorite,
-size: 100,
-color:
-Colors.red,
-),
+Image.asset(
+  'assets/images/logo_onelife.png',
+  height: 140,
+)
 
                   const SizedBox(
                     height: 20,
