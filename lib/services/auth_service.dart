@@ -1,28 +1,44 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
+import '../models/user_profile.dart';
+import 'hive_service.dart';
 
 class AuthService {
   static final FirebaseAuth _auth =
       FirebaseAuth.instance;
 
+  static final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
+
+  static final GoogleSignIn _googleSignIn =
+      GoogleSignIn();
+
+  static User? get currentUser =>
+      _auth.currentUser;
+
+  static bool get isLoggedIn =>
+      _auth.currentUser != null;
+
   static Future<User?> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser =
-          await GoogleSignIn().signIn();
+      await _googleSignIn.signOut();
 
-      if (googleUser == null) {
+      final GoogleSignInAccount? account =
+          await _googleSignIn.signIn();
+
+      if (account == null) {
         return null;
       }
 
-      final GoogleSignInAuthentication
-          googleAuth =
-          await googleUser.authentication;
+      final GoogleSignInAuthentication auth =
+          await account.authentication;
 
       final credential =
           GoogleAuthProvider.credential(
-        accessToken:
-            googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+        accessToken: auth.accessToken,
+        idToken: auth.idToken,
       );
 
       final userCredential =
@@ -30,10 +46,91 @@ class AuthService {
         credential,
       );
 
-      return userCredential.user;
+      final user = userCredential.user;
+
+      if (user == null) {
+        return null;
+      }
+
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .set({
+        'uid': user.uid,
+        'displayName':
+            user.displayName ?? '',
+        'email': user.email ?? '',
+        'photoUrl':
+            user.photoURL ?? '',
+        'createdAt':
+            FieldValue.serverTimestamp(),
+        'lastLogin':
+            FieldValue.serverTimestamp(),
+        'appVersion': '1.0.0',
+      }, SetOptions(merge: true));
+
+      final box =
+          HiveService.getProfileBox();
+
+      UserProfile profile;
+
+      if (box.isEmpty) {
+        profile = UserProfile(
+          displayName:
+              user.displayName ??
+                  'Utilisateur',
+          firstLaunch: false,
+          cloudConnected: true,
+          email: user.email,
+          photoUrl: user.photoURL,
+          appVersion: '1.0.0',
+        );
+
+        await box.add(profile);
+      } else {
+        profile = box.getAt(0)!;
+
+        profile.displayName =
+            user.displayName ??
+                profile.displayName;
+
+        profile.email = user.email;
+
+        profile.photoUrl =
+            user.photoURL;
+
+        profile.cloudConnected = true;
+
+        profile.firstLaunch = false;
+
+        await profile.save();
+      }
+
+      return user;
     } catch (e) {
-      print(e);
+      print(
+          'Erreur Google Sign-In : $e');
       return null;
+    }
+  }
+
+  static Future<void> signOut() async {
+    await _googleSignIn.signOut();
+
+    await _auth.signOut();
+
+    final box =
+        HiveService.getProfileBox();
+
+    if (box.isNotEmpty) {
+      final profile = box.getAt(0);
+
+      if (profile != null) {
+        profile.cloudConnected =
+            false;
+
+        await profile.save();
+      }
     }
   }
 }

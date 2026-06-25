@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app.dart';
 import '../models/user_profile.dart';
 import '../services/hive_service.dart';
+import '../services/auth_service.dart';
 
 class WelcomePage extends StatefulWidget {
 const WelcomePage({super.key});
@@ -176,19 +177,40 @@ Image.asset(
                               const Text(
                             'Continuer avec Google',
                           ),
-                          onPressed:
-                              () {
-                            ScaffoldMessenger.of(
-                                    context)
-                                .showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text(
-                                  'Connexion Google bientôt disponible.',
-                                ),
-                              ),
-                            );
-                          },
+                         onPressed: () async {
+  final user = await AuthService.signInWithGoogle();
+
+  if (user == null) {
+    return;
+  }
+
+  final profile =
+      HiveService.getProfileBox().getAt(0);
+
+  if (profile != null) {
+    profile.displayName =
+        user.displayName ?? 'Utilisateur';
+
+    profile.email = user.email;
+
+    profile.photoUrl = user.photoURL;
+
+    profile.cloudConnected = true;
+
+    profile.firstLaunch = false;
+
+    await profile.save();
+  }
+
+  if (!mounted) return;
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const OneLifeApp(),
+    ),
+  );
+},
                         ),
                       ),
 

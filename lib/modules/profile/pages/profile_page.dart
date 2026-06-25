@@ -132,22 +132,39 @@ Card(
     subtitle: const Text(
       'Sauvegarder et restaurer vos données',
     ),
-    onTap: () async {
-      final user =
-          await AuthService.signInWithGoogle();
+   onTap: () async {
+  final user = await AuthService.signInWithGoogle();
 
-      if (user != null &&
-          context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          SnackBar(
-            content: Text(
-              'Connecté : ${user.email}',
-            ),
-          ),
-        );
-      }
-    },
+  if (user == null) return;
+
+  final profile =
+      HiveService.getProfileBox().getAt(0);
+
+  if (profile != null) {
+    profile.displayName =
+        user.displayName ?? "Utilisateur";
+
+    profile.email = user.email;
+
+    profile.photoUrl = user.photoURL;
+
+    profile.cloudConnected = true;
+
+    await profile.save();
+  }
+
+  if (!context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        "Bienvenue ${user.displayName ?? user.email}",
+      ),
+    ),
+  );
+
+  (context as Element).markNeedsBuild();
+},
   ),
 ),
 
