@@ -77,7 +77,7 @@ children: [
 Image.asset(
   'assets/images/logo_onelife.png',
   height: 140,
-)
+),
 
                   const SizedBox(
                     height: 20,
