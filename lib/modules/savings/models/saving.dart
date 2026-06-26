@@ -57,13 +57,60 @@ class Saving extends HiveObject {
       savedAmount:
           savedAmount ?? this.savedAmount,
       remainingAmount:
-          remainingAmount ?? this.remainingAmount,
+          remainingAmount ??
+              this.remainingAmount,
       createdAt:
           createdAt ?? this.createdAt,
       targetDate:
           targetDate ?? this.targetDate,
       history:
           history ?? this.history,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'targetAmount': targetAmount,
+      'savedAmount': savedAmount,
+      'remainingAmount': remainingAmount,
+      'createdAt':
+          createdAt.toIso8601String(),
+      'targetDate':
+          targetDate?.toIso8601String(),
+      'history': history,
+    };
+  }
+
+  factory Saving.fromMap(
+    Map<String, dynamic> map,
+  ) {
+    return Saving(
+      id: map['id'],
+      title: map['title'] ?? '',
+      targetAmount:
+          (map['targetAmount'] as num)
+              .toDouble(),
+      savedAmount:
+          (map['savedAmount'] as num)
+              .toDouble(),
+      remainingAmount:
+          (map['remainingAmount']
+                  as num)
+              .toDouble(),
+      createdAt: DateTime.parse(
+        map['createdAt'],
+      ),
+      targetDate:
+          map['targetDate'] == null
+              ? null
+              : DateTime.parse(
+                  map['targetDate'],
+                ),
+      history: List<String>.from(
+        map['history'] ?? [],
+      ),
     );
   }
 }

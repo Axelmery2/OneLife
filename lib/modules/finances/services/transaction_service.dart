@@ -1,13 +1,11 @@
 import 'package:hive/hive.dart';
 
+import '../../../services/hive_service.dart';
 import '../models/transaction.dart';
 
 class TransactionService {
-  static const String boxName =
-      'transactions';
-
   static Box<Transaction> get box =>
-      Hive.box<Transaction>(boxName);
+      HiveService.getTransactionsBox();
 
   static List<Transaction>
       getAllTransactions() {

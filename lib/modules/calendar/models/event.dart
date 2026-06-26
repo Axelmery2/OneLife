@@ -1,25 +1,101 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 
-part 'event.g.dart';
+import '../../../services/hive_service.dart';
+import '../models/event.dart';
 
-@HiveType(typeId: 9)
-class Event extends HiveObject {
-  @HiveField(0)
-  String id;
+class EventService {
+  static Box<Event> get box =>
+      HiveService.getEventsBox();
 
-  @HiveField(1)
-  String title;
+  static final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
 
-  @HiveField(2)
-  String description;
+  static String get _uid =>
+      FirebaseAuth.instance.currentUser!.uid;
 
-  @HiveField(3)
-  DateTime date;
+  static CollectionReference get _collection =>
+      _firestore
+          .collection('users')
+          .doc(_uid)
+          .collection('events');
 
-  Event({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.date,
-  });
+  static List<Event> getAllEvents() {
+    final events = box.values.toList();
+
+    events.sort(
+      (a, b) => a.date.compareTo(b.date),
+    );
+
+    return events;
+  }
+
+  static Future<void> addEvent(
+    Event event,
+  ) async {
+    await box.put(
+      event.id,
+      event,
+    );
+
+    await _collection
+        .doc(event.id)
+        .set(
+          event.toMap(),
+        );
+  }
+
+  static Future<void> updateEvent(
+    Event event,
+  ) async {
+    await box.put(
+      event.id,
+      event,
+    );
+
+    await _collection
+        .doc(event.id)
+        .set(
+          event.toMap(),
+        );
+  }
+
+  static Future<void> deleteEvent(
+    String id,
+  ) async {
+    await box.delete(id);
+
+    await _collection
+        .doc(id)
+        .delete();
+  }
+
+  static Event? getEvent(
+    String id,
+  ) {
+    return box.get(id);
+  }
+
+  static Future<void> clearAll() async {
+    await box.clear();
+  }
+
+  static Future<void>
+      syncFromFirestore() async {
+    final snapshot =
+        await _collection.get();
+
+    for (final doc in snapshot.docs) {
+      final event = Event.fromMap(
+        doc.data()
+            as Map<String, dynamic>,
+      );
+
+      await box.put(
+        event.id,
+        event,
+      );
+    }
+  }
 }

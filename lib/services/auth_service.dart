@@ -3,6 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models/user_profile.dart';
+
+import '../modules/debts/services/debt_service.dart';
+import '../modules/creances/services/creance_service.dart';
+import '../modules/notes/services/note_service.dart';
+import '../modules/savings/services/saving_service.dart';
+import '../modules/projects/services/project_service.dart';
+import '../modules/finances/services/transaction_service.dart';
+import '../modules/calendar/services/event_service.dart';
+
 import 'hive_service.dart';
 
 class AuthService {
@@ -52,6 +61,19 @@ class AuthService {
         return null;
       }
 
+      // Initialisation des boxes Hive
+      await HiveService.init();
+
+      // Synchronisation complète
+      await DebtService.syncFromFirestore();
+      await CreanceService.syncFromFirestore();
+      await NoteService.syncFromFirestore();
+      await SavingService.syncFromFirestore();
+      await ProjectService.syncFromFirestore();
+      await TransactionService.syncFromFirestore();
+      await EventService.syncFromFirestore();
+
+      // Profil utilisateur Firestore
       await _firestore
           .collection('users')
           .doc(user.uid)
@@ -115,10 +137,6 @@ class AuthService {
   }
 
   static Future<void> signOut() async {
-    await _googleSignIn.signOut();
-
-    await _auth.signOut();
-
     final box =
         HiveService.getProfileBox();
 
@@ -132,5 +150,11 @@ class AuthService {
         await profile.save();
       }
     }
+
+    await HiveService.reset();
+
+    await _googleSignIn.signOut();
+
+    await _auth.signOut();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddDebtDialog extends StatefulWidget {
   final Function(Map<String, dynamic>) onAdd;
@@ -138,12 +139,16 @@ class _AddDebtDialogState
       return;
     }
 
+    final user = FirebaseAuth.instance.currentUser;
+
     widget.onAdd({
       'id':
           widget.debt?['id'] ??
               DateTime.now()
                   .millisecondsSinceEpoch
                   .toString(),
+      'userId': user?.uid,
+      'userEmail': user?.email,
 
       'name': name,
 

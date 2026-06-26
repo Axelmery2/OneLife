@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../modules/debts/models/debt.dart';
 import '../modules/creances/models/creance.dart';
@@ -10,14 +11,29 @@ import '../modules/calendar/models/event.dart';
 import '../models/user_profile.dart';
 
 class HiveService {
+  static String get currentUid =>
+      FirebaseAuth.instance.currentUser?.uid ??
+      'guest';
+
   static const String settingsBox = 'settings';
   static const String profileBox = 'profile';
-  static const String transactionsBox = 'transactions';
-  static const String savingsBox = 'savings';
+
+  static const String transactionsBox =
+      'transactions';
+
+  static const String savingsBox =
+      'savings';
+
   static const String debtsBox = 'debts';
-  static const String receivablesBox = 'receivables';
+
+  static const String receivablesBox =
+      'receivables';
+
   static const String notesBox = 'notes';
-  static const String projectsBox = 'projects';
+
+  static const String projectsBox =
+      'projects';
+
   static const String eventsBox = 'events';
 
   static bool _initialized = false;
@@ -28,56 +44,72 @@ class HiveService {
     await Hive.initFlutter();
 
     if (!Hive.isBoxOpen(settingsBox)) {
-      await Hive.openBox(settingsBox);
+      await Hive.openBox(
+        settingsBox,
+      );
     }
 
     if (!Hive.isBoxOpen(profileBox)) {
-  await Hive.openBox<UserProfile>(
-    profileBox,
-  );
-}
+      await Hive.openBox<UserProfile>(
+        profileBox,
+      );
+    }
 
-    if (!Hive.isBoxOpen(transactionsBox)) {
+    if (!Hive.isBoxOpen(
+      '${transactionsBox}_$currentUid',
+    )) {
       await Hive.openBox<Transaction>(
-        transactionsBox,
+        '${transactionsBox}_$currentUid',
       );
     }
 
-    if (!Hive.isBoxOpen(debtsBox)) {
+    if (!Hive.isBoxOpen(
+      '${debtsBox}_$currentUid',
+    )) {
       await Hive.openBox<Debt>(
-        debtsBox,
+        '${debtsBox}_$currentUid',
       );
     }
 
-    if (!Hive.isBoxOpen(receivablesBox)) {
+    if (!Hive.isBoxOpen(
+      '${receivablesBox}_$currentUid',
+    )) {
       await Hive.openBox<Creance>(
-        receivablesBox,
+        '${receivablesBox}_$currentUid',
       );
     }
 
-    if (!Hive.isBoxOpen(notesBox)) {
+    if (!Hive.isBoxOpen(
+      '${notesBox}_$currentUid',
+    )) {
       await Hive.openBox<Note>(
-        notesBox,
+        '${notesBox}_$currentUid',
       );
     }
 
-    if (!Hive.isBoxOpen(savingsBox)) {
+    if (!Hive.isBoxOpen(
+      '${savingsBox}_$currentUid',
+    )) {
       await Hive.openBox<Saving>(
-        savingsBox,
+        '${savingsBox}_$currentUid',
       );
     }
 
-    if (!Hive.isBoxOpen(projectsBox)) {
+    if (!Hive.isBoxOpen(
+      '${projectsBox}_$currentUid',
+    )) {
       await Hive.openBox<Project>(
-  projectsBox,
-);
+        '${projectsBox}_$currentUid',
+      );
     }
 
-    if (!Hive.isBoxOpen(eventsBox)) {
-  await Hive.openBox<Event>(
-    eventsBox,
-  );
-}
+    if (!Hive.isBoxOpen(
+      '${eventsBox}_$currentUid',
+    )) {
+      await Hive.openBox<Event>(
+        '${eventsBox}_$currentUid',
+      );
+    }
 
     _initialized = true;
   }
@@ -86,46 +118,53 @@ class HiveService {
       Hive.box(settingsBox);
 
   static Box<UserProfile>
-    getProfileBox() =>
-        Hive.box<UserProfile>(
-          profileBox,
-        );
+      getProfileBox() =>
+          Hive.box<UserProfile>(
+            profileBox,
+          );
 
   static Box<Transaction>
       getTransactionsBox() =>
           Hive.box<Transaction>(
-            transactionsBox,
+            '${transactionsBox}_$currentUid',
           );
 
   static Box<Debt> getDebtsBox() =>
       Hive.box<Debt>(
-        debtsBox,
+        '${debtsBox}_$currentUid',
       );
 
   static Box<Creance>
       getReceivablesBox() =>
           Hive.box<Creance>(
-            receivablesBox,
+            '${receivablesBox}_$currentUid',
           );
 
   static Box<Note> getNotesBox() =>
       Hive.box<Note>(
-        notesBox,
+        '${notesBox}_$currentUid',
       );
 
   static Box<Saving>
       getSavingsBox() =>
           Hive.box<Saving>(
-            savingsBox,
+            '${savingsBox}_$currentUid',
           );
-static Box<Project>
-    getProjectsBox() =>
-        Hive.box<Project>(
-          projectsBox,
-        );
 
-  static Box<Event> getEventsBox() =>
-      Hive.box<Event>(
-        eventsBox,
-      );
+  static Box<Project>
+      getProjectsBox() =>
+          Hive.box<Project>(
+            '${projectsBox}_$currentUid',
+          );
+
+  static Box<Event>
+      getEventsBox() =>
+          Hive.box<Event>(
+            '${eventsBox}_$currentUid',
+          );
+
+  static Future<void> reset() async {
+    await Hive.close();
+    _initialized = false;
+  }
 }

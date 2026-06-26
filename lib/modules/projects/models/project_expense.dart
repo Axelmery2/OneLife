@@ -22,4 +22,29 @@ class ProjectExpense extends HiveObject {
     required this.description,
     required this.date,
   });
+
+  Map<String, dynamic> toMap() {
+  return {
+    'title': title,
+    'amount': amount,
+    'description': description,
+    'date': date.toIso8601String(),
+  };
+}
+
+factory ProjectExpense.fromMap(
+  Map<String, dynamic> map,
+) {
+  return ProjectExpense(
+    title: map['title'] ?? '',
+    amount:
+        (map['amount'] as num)
+            .toDouble(),
+    description:
+        map['description'] ?? '',
+    date: DateTime.parse(
+      map['date'],
+    ),
+  );
+}
 }

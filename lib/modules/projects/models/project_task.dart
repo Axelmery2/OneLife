@@ -14,4 +14,21 @@ class ProjectTask extends HiveObject {
     required this.title,
     this.completed = false,
   });
+
+  Map<String, dynamic> toMap() {
+  return {
+    'title': title,
+    'completed': completed,
+  };
+}
+
+factory ProjectTask.fromMap(
+  Map<String, dynamic> map,
+) {
+  return ProjectTask(
+    title: map['title'] ?? '',
+    completed:
+        map['completed'] ?? false,
+  );
+}
 }

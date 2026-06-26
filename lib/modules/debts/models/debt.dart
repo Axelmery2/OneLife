@@ -66,10 +66,64 @@ class Debt extends HiveObject {
       description: description ?? this.description,
       totalAmount: totalAmount ?? this.totalAmount,
       paidAmount: paidAmount ?? this.paidAmount,
-      remainingAmount: remainingAmount ?? this.remainingAmount,
-      createdAt: createdAt ?? this.createdAt,
+      remainingAmount:
+          remainingAmount ??
+          this.remainingAmount,
+      createdAt:
+          createdAt ?? this.createdAt,
       dueDate: dueDate ?? this.dueDate,
       history: history ?? this.history,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'phone': phone,
+      'description': description,
+      'totalAmount': totalAmount,
+      'paidAmount': paidAmount,
+      'remainingAmount': remainingAmount,
+      'createdAt':
+          createdAt.toIso8601String(),
+      'dueDate':
+          dueDate?.toIso8601String(),
+      'history': history,
+    };
+  }
+
+  factory Debt.fromMap(
+    Map<String, dynamic> map,
+  ) {
+    return Debt(
+      id: map['id'],
+      name: map['name'],
+      phone: map['phone'],
+      description:
+          map['description'] ?? '',
+      totalAmount:
+          (map['totalAmount'] as num)
+              .toDouble(),
+      paidAmount:
+          (map['paidAmount'] as num)
+              .toDouble(),
+      remainingAmount:
+          (map['remainingAmount']
+                  as num)
+              .toDouble(),
+      createdAt: DateTime.parse(
+        map['createdAt'],
+      ),
+      dueDate:
+          map['dueDate'] == null
+              ? null
+              : DateTime.parse(
+                  map['dueDate'],
+                ),
+      history: List<String>.from(
+        map['history'] ?? [],
+      ),
     );
   }
 }

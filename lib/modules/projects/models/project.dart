@@ -83,4 +83,92 @@ class Project extends HiveObject {
       expenses: expenses ?? this.expenses,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'budget': budget,
+      'spentAmount': spentAmount,
+      'progress': progress,
+      'status': status,
+      'createdAt':
+          createdAt.toIso8601String(),
+      'deadline':
+          deadline?.toIso8601String(),
+      'tasks': tasks
+          .map(
+            (task) => task.toMap(),
+          )
+          .toList(),
+      'expenses': expenses
+          .map(
+            (expense) =>
+                expense.toMap(),
+          )
+          .toList(),
+    };
+  }
+
+  factory Project.fromMap(
+    Map<String, dynamic> map,
+  ) {
+    return Project(
+      id: map['id'],
+      title: map['title'] ?? '',
+      description:
+          map['description'] ?? '',
+      budget:
+          (map['budget'] as num)
+              .toDouble(),
+      spentAmount:
+          (map['spentAmount']
+                  as num)
+              .toDouble(),
+      progress:
+          map['progress'] ?? 0,
+      status:
+          map['status'] ??
+              'En cours',
+      createdAt: DateTime.parse(
+        map['createdAt'],
+      ),
+      deadline:
+          map['deadline'] == null
+              ? null
+              : DateTime.parse(
+                  map['deadline'],
+                ),
+      tasks:
+          (map['tasks']
+                      as List? ??
+                  [])
+              .map(
+                (task) =>
+                    ProjectTask.fromMap(
+                  Map<String,
+                      dynamic>.from(
+                    task,
+                  ),
+                ),
+              )
+              .toList(),
+      expenses:
+          (map['expenses']
+                      as List? ??
+                  [])
+              .map(
+                (expense) =>
+                    ProjectExpense
+                        .fromMap(
+                  Map<String,
+                      dynamic>.from(
+                    expense,
+                  ),
+                ),
+              )
+              .toList(),
+    );
+  }
 }
