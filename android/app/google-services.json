@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "820853000577-3g5756atef4ij1l5s67br2ck8clbvs0i.apps.googleusercontent.com",
+          "client_id": "820853000577-vaa1mapt17l349vt47o7f1f63nbmiknp.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.onelife",
-            "certificate_hash": "833587f879b5075e43566ae321e6e014380bd25f"
+            "certificate_hash": "dc64da561de8bd662077bfe7f5cde56cfcdffe27"
           }
         },
         {
