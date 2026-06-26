@@ -14,7 +14,7 @@ class Transaction extends HiveObject {
   double amount;
 
   @HiveField(3)
-  String type; // revenu ou depense
+  String type;
 
   @HiveField(4)
   String category;
@@ -54,6 +54,39 @@ class Transaction extends HiveObject {
           description ?? this.description,
       createdAt:
           createdAt ?? this.createdAt,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'amount': amount,
+      'type': type,
+      'category': category,
+      'description': description,
+      'createdAt':
+          createdAt.toIso8601String(),
+    };
+  }
+
+  factory Transaction.fromMap(
+    Map<String, dynamic> map,
+  ) {
+    return Transaction(
+      id: map['id'] ?? '',
+      title: map['title'] ?? '',
+      amount:
+          (map['amount'] ?? 0)
+              .toDouble(),
+      type: map['type'] ?? '',
+      category:
+          map['category'] ?? '',
+      description:
+          map['description'] ?? '',
+      createdAt: DateTime.parse(
+        map['createdAt'],
+      ),
     );
   }
 }

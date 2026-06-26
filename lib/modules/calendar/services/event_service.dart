@@ -1,158 +1,109 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hive/hive.dart';
 
-import '../models/user_profile.dart';
+import '../../../services/hive_service.dart';
+import '../models/event.dart';
 
-import '../modules/debts/services/debt_service.dart';
-import '../modules/creances/services/creance_service.dart';
-import '../modules/notes/services/note_service.dart';
-import '../modules/savings/services/saving_service.dart';
-import '../modules/projects/services/project_service.dart';
-import '../modules/calendar/services/event_service.dart';
+class EventService {
+  static Box<Event> get box =>
+      HiveService.getEventsBox();
 
-import 'hive_service.dart';
-
-class AuthService {
-  static final FirebaseAuth _auth =
-      FirebaseAuth.instance;
-
-  static final FirebaseFirestore _firestore =
+  static final FirebaseFirestore
+      _firestore =
       FirebaseFirestore.instance;
 
-  static final GoogleSignIn _googleSignIn =
-      GoogleSignIn();
+  static String get _uid =>
+      FirebaseAuth
+          .instance
+          .currentUser!
+          .uid;
 
-  static User? get currentUser =>
-      _auth.currentUser;
-
-  static bool get isLoggedIn =>
-      _auth.currentUser != null;
-
-  static Future<User?> signInWithGoogle() async {
-    try {
-      await _googleSignIn.signOut();
-
-      final GoogleSignInAccount? account =
-          await _googleSignIn.signIn();
-
-      if (account == null) {
-        return null;
-      }
-
-      final GoogleSignInAuthentication auth =
-          await account.authentication;
-
-      final credential =
-          GoogleAuthProvider.credential(
-        accessToken: auth.accessToken,
-        idToken: auth.idToken,
-      );
-
-      final userCredential =
-          await _auth.signInWithCredential(
-        credential,
-      );
-
-      final user = userCredential.user;
-
-      if (user == null) {
-        return null;
-      }
-
-      // Initialisation Hive
-      await HiveService.init();
-
-      // Synchronisation Firestore -> Hive
-      await DebtService.syncFromFirestore();
-      await CreanceService.syncFromFirestore();
-      await NoteService.syncFromFirestore();
-      await SavingService.syncFromFirestore();
-      await ProjectService.syncFromFirestore();
-      await EventService.syncFromFirestore();
-
-      // Mise à jour du profil utilisateur
-      await _firestore
+  static CollectionReference get
+      _collection => _firestore
           .collection('users')
-          .doc(user.uid)
-          .set({
-        'uid': user.uid,
-        'displayName':
-            user.displayName ?? '',
-        'email': user.email ?? '',
-        'photoUrl':
-            user.photoURL ?? '',
-        'createdAt':
-            FieldValue.serverTimestamp(),
-        'lastLogin':
-            FieldValue.serverTimestamp(),
-        'appVersion': '1.0.0',
-      }, SetOptions(merge: true));
+          .doc(_uid)
+          .collection('events');
 
-      final box =
-          HiveService.getProfileBox();
+  static List<Event> getAllEvents() {
+    final events =
+        box.values.toList();
 
-      UserProfile profile;
+    events.sort(
+      (a, b) =>
+          a.date.compareTo(b.date),
+    );
 
-      if (box.isEmpty) {
-        profile = UserProfile(
-          displayName:
-              user.displayName ??
-                  'Utilisateur',
-          firstLaunch: false,
-          cloudConnected: true,
-          email: user.email,
-          photoUrl: user.photoURL,
-          appVersion: '1.0.0',
+    return events;
+  }
+
+  static Future<void> addEvent(
+    Event event,
+  ) async {
+    await box.put(
+      event.id,
+      event,
+    );
+
+    await _collection
+        .doc(event.id)
+        .set(
+          event.toMap(),
         );
+  }
 
-        await box.add(profile);
-      } else {
-        profile = box.getAt(0)!;
+  static Future<void> updateEvent(
+    Event event,
+  ) async {
+    await box.put(
+      event.id,
+      event,
+    );
 
-        profile.displayName =
-            user.displayName ??
-                profile.displayName;
+    await _collection
+        .doc(event.id)
+        .set(
+          event.toMap(),
+        );
+  }
 
-        profile.email = user.email;
+  static Future<void> deleteEvent(
+    String id,
+  ) async {
+    await box.delete(id);
 
-        profile.photoUrl =
-            user.photoURL;
+    await _collection
+        .doc(id)
+        .delete();
+  }
 
-        profile.cloudConnected = true;
+  static Event? getEvent(
+    String id,
+  ) {
+    return box.get(id);
+  }
 
-        profile.firstLaunch = false;
+  static Future<void>
+      syncFromFirestore() async {
+    final snapshot =
+        await _collection.get();
 
-        await profile.save();
-      }
+    for (final doc
+        in snapshot.docs) {
+      final event =
+          Event.fromMap(
+        doc.data()
+            as Map<String, dynamic>,
+      );
 
-      return user;
-    } catch (e) {
-      print(
-          'Erreur Google Sign-In : $e');
-      return null;
+      await box.put(
+        event.id,
+        event,
+      );
     }
   }
 
-  static Future<void> signOut() async {
-    final box =
-        HiveService.getProfileBox();
-
-    if (box.isNotEmpty) {
-      final profile = box.getAt(0);
-
-      if (profile != null) {
-        profile.cloudConnected =
-            false;
-
-        await profile.save();
-      }
-    }
-
-    await HiveService.reset();
-
-    await _googleSignIn.signOut();
-
-    await _auth.signOut();
+  static Future<void> clearAll() async {
+    await box.clear();
   }
 }

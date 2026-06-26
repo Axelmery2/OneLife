@@ -1,101 +1,45 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 
-import '../../../services/hive_service.dart';
-import '../models/event.dart';
+part 'event.g.dart';
 
-class EventService {
-  static Box<Event> get box =>
-      HiveService.getEventsBox();
+@HiveType(typeId: 9)
+class Event extends HiveObject {
+  @HiveField(0)
+  String id;
 
-  static final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance;
+  @HiveField(1)
+  String title;
 
-  static String get _uid =>
-      FirebaseAuth.instance.currentUser!.uid;
+  @HiveField(2)
+  String description;
 
-  static CollectionReference get _collection =>
-      _firestore
-          .collection('users')
-          .doc(_uid)
-          .collection('events');
+  @HiveField(3)
+  DateTime date;
 
-  static List<Event> getAllEvents() {
-    final events = box.values.toList();
+  Event({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.date,
+  });
 
-    events.sort(
-      (a, b) => a.date.compareTo(b.date),
-    );
-
-    return events;
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'date': date.toIso8601String(),
+    };
   }
 
-  static Future<void> addEvent(
-    Event event,
-  ) async {
-    await box.put(
-      event.id,
-      event,
-    );
-
-    await _collection
-        .doc(event.id)
-        .set(
-          event.toMap(),
-        );
-  }
-
-  static Future<void> updateEvent(
-    Event event,
-  ) async {
-    await box.put(
-      event.id,
-      event,
-    );
-
-    await _collection
-        .doc(event.id)
-        .set(
-          event.toMap(),
-        );
-  }
-
-  static Future<void> deleteEvent(
-    String id,
-  ) async {
-    await box.delete(id);
-
-    await _collection
-        .doc(id)
-        .delete();
-  }
-
-  static Event? getEvent(
-    String id,
+  factory Event.fromMap(
+    Map<String, dynamic> map,
   ) {
-    return box.get(id);
-  }
-
-  static Future<void> clearAll() async {
-    await box.clear();
-  }
-
-  static Future<void>
-      syncFromFirestore() async {
-    final snapshot =
-        await _collection.get();
-
-    for (final doc in snapshot.docs) {
-      final event = Event.fromMap(
-        doc.data()
-            as Map<String, dynamic>,
-      );
-
-      await box.put(
-        event.id,
-        event,
-      );
-    }
+    return Event(
+      id: map['id'],
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      date: DateTime.parse(map['date']),
+    );
   }
 }
