@@ -39,14 +39,13 @@ class HiveService {
   static bool _initialized = false;
 
   static Future<void> init() async {
-    if (_initialized) return;
-
-    await Hive.initFlutter();
+    if (!_initialized) {
+      await Hive.initFlutter();
+      _initialized = true;
+    }
 
     if (!Hive.isBoxOpen(settingsBox)) {
-      await Hive.openBox(
-        settingsBox,
-      );
+      await Hive.openBox(settingsBox);
     }
 
     if (!Hive.isBoxOpen(profileBox)) {
@@ -110,8 +109,6 @@ class HiveService {
         '${eventsBox}_$currentUid',
       );
     }
-
-    _initialized = true;
   }
 
   static Box getSettingsBox() =>

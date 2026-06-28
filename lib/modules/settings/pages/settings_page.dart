@@ -6,6 +6,7 @@ import '../../../models/user_profile.dart';
 import '../../../services/hive_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../profile/pages/profile_page.dart';
+import '../../../pages/pin_setup_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -354,11 +355,414 @@ Future<void> checkUpdate() async {
   onTap: checkUpdate,
 ),
 
-       
+ListTile(
+  leading: const Icon(
+    Icons.lock_outline,
+  ),
+  title: const Text(
+    'Code PIN',
+  ),
+  subtitle: Text(
+    profile?.pinEnabled == true
+        ? 'Activé'
+        : 'Désactivé',
+  ),
+  onTap: () async {
+    if (profile == null) return;
+
+    // Activation du PIN
+    if (!profile.pinEnabled) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              const PinSetupPage(),
+        ),
+      );
+
+      if (mounted) {
+        setState(() {});
+      }
+
+      return;
+    }
+
+    // PIN déjà activé
+    final action =
+        await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize:
+              MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(
+                Icons.edit,
+              ),
+              title: const Text(
+                'Modifier le code PIN',
+              ),
+              onTap: () {
+                Navigator.pop(
+                  context,
+                  'edit',
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.timer,
+              ),
+              title: const Text(
+                'Modifier le délai de verrouillage',
+              ),
+              onTap: () {
+                Navigator.pop(
+                  context,
+                  'delay',
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.delete,
+              ),
+              title: const Text(
+                'Désactiver le code PIN',
+              ),
+              onTap: () {
+                Navigator.pop(
+                  context,
+                  'disable',
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Modifier le PIN
+    if (action == 'edit') {
+  final controller =
+      TextEditingController();
+
+  final valid =
+      await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text(
+        'Vérification',
+      ),
+      content: TextField(
+        controller: controller,
+        keyboardType:
+            TextInputType.number,
+        maxLength: 4,
+        obscureText: true,
+        decoration:
+            const InputDecoration(
+          labelText:
+              'PIN actuel',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () =>
+              Navigator.pop(
+            context,
+            false,
+          ),
+          child: const Text(
+            'Annuler',
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(
+              context,
+              controller.text ==
+                  profile.pinCode,
+            );
+          },
+          child: const Text(
+            'Valider',
+          ),
+        ),
+      ],
+    ),
+  );
 
  
+  if (valid == true) {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            const PinSetupPage(),
+      ),
+    );
 
-         ListTile(
+    if (mounted) {
+      setState(() {});
+    }
+  } else {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Code PIN incorrect.',
+        ),
+      ),
+    );
+  }
+    }
+
+
+  
+
+
+   // Modifier le délai
+if (action == 'delay') {
+  final controller =
+      TextEditingController();
+
+  final valid =
+      await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text(
+        'Vérification',
+      ),
+      content: TextField(
+        controller: controller,
+        keyboardType:
+            TextInputType.number,
+        maxLength: 4,
+        obscureText: true,
+        decoration:
+            const InputDecoration(
+          labelText:
+              'PIN actuel',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () =>
+              Navigator.pop(
+            context,
+            false,
+          ),
+          child: const Text(
+            'Annuler',
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(
+              context,
+              controller.text ==
+                  profile.pinCode,
+            );
+          },
+          child: const Text(
+            'Valider',
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (valid != true) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Code PIN incorrect.',
+      ),
+    ),
+  );
+
+  return;
+}
+  int selected =
+      profile.autoLockMinutes;
+
+  final result =
+      await showDialog<int>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text(
+        'Verrouillage automatique',
+      ),
+      content:
+          DropdownButton<int>(
+        value: selected,
+        isExpanded: true,
+        items: const [
+          DropdownMenuItem(
+            value: 0,
+            child: Text(
+              'Immédiatement',
+            ),
+          ),
+          DropdownMenuItem(
+            value: 1,
+            child: Text(
+              '1 minute',
+            ),
+          ),
+          DropdownMenuItem(
+            value: 5,
+            child: Text(
+              '5 minutes',
+            ),
+          ),
+          DropdownMenuItem(
+            value: 15,
+            child: Text(
+              '15 minutes',
+            ),
+          ),
+          DropdownMenuItem(
+            value: 30,
+            child: Text(
+              '30 minutes',
+            ),
+          ),
+          DropdownMenuItem(
+            value: -1,
+            child: Text(
+              'Jamais',
+            ),
+          ),
+        ],
+        onChanged: (value) {
+          selected =
+              value ?? 5;
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () =>
+              Navigator.pop(
+            context,
+          ),
+          child: const Text(
+            'Annuler',
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () =>
+              Navigator.pop(
+            context,
+            selected,
+          ),
+          child: const Text(
+            'Enregistrer',
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (result != null) {
+    profile.autoLockMinutes =
+        result;
+
+    await profile.save();
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+}
+    // Désactivation du PIN
+    if (action == 'disable') {
+      final controller =
+          TextEditingController();
+
+      final valid =
+          await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text(
+            'Confirmation',
+          ),
+          content: TextField(
+            controller:
+                controller,
+            keyboardType:
+                TextInputType.number,
+            maxLength: 4,
+            obscureText: true,
+            decoration:
+                const InputDecoration(
+              labelText:
+                  'PIN actuel',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(
+                context,
+                false,
+              ),
+              child: const Text(
+                'Annuler',
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  controller.text ==
+                      profile.pinCode,
+                );
+              },
+              child: const Text(
+                'Valider',
+              ),
+            ),
+          ],
+        ),
+      );
+
+     if (valid == true) {
+  profile.pinEnabled = false;
+
+  profile.pinCode = null;
+
+  await profile.save();
+
+  if (mounted) {
+    setState(() {});
+  }
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Code PIN désactivé.',
+      ),
+    ),
+  );
+} else {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Code PIN incorrect.',
+      ),
+    ),
+  );
+}
+   
+  }
+    }
+
+),
+
+ListTile(
   leading: const Icon(
     Icons.support_agent,
   ),
@@ -413,7 +817,7 @@ ListTile(
     'OneLife V1',
   ),
   onTap: () {
-    showAboutDialog(
+   showAboutDialog(
       context: context,
       applicationName: 'OneLife',
       applicationVersion: version,
@@ -421,9 +825,9 @@ ListTile(
     );
   },
 ),
-],
+
+        ],
       ),
     );
   }
 }
-  

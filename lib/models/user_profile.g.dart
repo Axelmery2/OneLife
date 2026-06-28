@@ -23,13 +23,17 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       email: fields[3] as String?,
       photoUrl: fields[4] as String?,
       appVersion: fields[5] as String,
+      pinEnabled: fields[6] as bool,
+      pinCode: fields[7] as String?,
+      autoLockMinutes: fields[8] as int,
+      lastUnlockTime: fields[9] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProfile obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.displayName)
       ..writeByte(1)
@@ -41,7 +45,15 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       ..writeByte(4)
       ..write(obj.photoUrl)
       ..writeByte(5)
-      ..write(obj.appVersion);
+      ..write(obj.appVersion)
+      ..writeByte(6)
+      ..write(obj.pinEnabled)
+      ..writeByte(7)
+      ..write(obj.pinCode)
+      ..writeByte(8)
+      ..write(obj.autoLockMinutes)
+      ..writeByte(9)
+      ..write(obj.lastUnlockTime);
   }
 
   @override

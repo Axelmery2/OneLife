@@ -16,57 +16,80 @@ class ProjectService {
   static String get _uid =>
       FirebaseAuth
           .instance
-          .currentUser!
-          .uid;
+          .currentUser
+          ?.uid ??
+      'guest';
 
-  static CollectionReference get
-      _collection => _firestore
-          .collection('users')
-          .doc(_uid)
-          .collection('projects');
+  static CollectionReference?
+      get _collection {
+    if (FirebaseAuth
+            .instance
+            .currentUser ==
+        null) {
+      return null;
+    }
 
-  static List<Project> getAllProjects() {
+    return _firestore
+        .collection('users')
+        .doc(_uid)
+        .collection('projects');
+  }
+
+  static List<Project>
+      getAllProjects() {
     return box.values.toList();
   }
 
   static Future<void> addProject(
     Project project,
   ) async {
+    // Sauvegarde locale
     await box.put(
       project.id,
       project,
     );
 
-    await _collection
-        .doc(project.id)
-        .set(
-          project.toMap(),
-        );
+    // Sauvegarde cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(project.id)
+          .set(
+            project.toMap(),
+          );
+    }
   }
 
   static Future<void> updateProject(
     Project project,
   ) async {
+    // Mise à jour locale
     await box.put(
       project.id,
       project,
     );
 
-    await _collection
-        .doc(project.id)
-        .set(
-          project.toMap(),
-        );
+    // Mise à jour cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(project.id)
+          .set(
+            project.toMap(),
+          );
+    }
   }
 
   static Future<void> deleteProject(
     String id,
   ) async {
+    // Suppression locale
     await box.delete(id);
 
-    await _collection
-        .doc(id)
-        .delete();
+    // Suppression cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(id)
+          .delete();
+    }
   }
 
   static Project? getProject(
@@ -75,14 +98,14 @@ class ProjectService {
     return box.get(id);
   }
 
-  static Future<void> clearAll() async {
-    await box.clear();
-  }
-
   static Future<void>
       syncFromFirestore() async {
+    if (_collection == null) {
+      return;
+    }
+
     final snapshot =
-        await _collection.get();
+        await _collection!.get();
 
     for (final doc
         in snapshot.docs) {
@@ -97,5 +120,9 @@ class ProjectService {
         project,
       );
     }
+  }
+
+  static Future<void> clearAll() async {
+    await box.clear();
   }
 }

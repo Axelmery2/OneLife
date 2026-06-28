@@ -22,6 +22,26 @@ class UserProfile extends HiveObject {
   @HiveField(5)
   String appVersion;
 
+  // =========================
+  // Sécurité
+  // =========================
+
+  @HiveField(6)
+  bool pinEnabled;
+
+  @HiveField(7)
+  String? pinCode;
+
+  // Temps avant redemande du PIN
+  // 0 = immédiatement
+  // -1 = jamais
+  @HiveField(8)
+  int autoLockMinutes;
+
+  // Dernier déverrouillage réussi
+  @HiveField(9)
+  DateTime? lastUnlockTime;
+
   UserProfile({
     required this.displayName,
     required this.firstLaunch,
@@ -29,5 +49,13 @@ class UserProfile extends HiveObject {
     this.email,
     this.photoUrl,
     this.appVersion = '1.0.0',
+
+    // Sécurité
+    this.pinEnabled = false,
+    this.pinCode,
+
+    // Verrouillage automatique
+    this.autoLockMinutes = 5,
+    this.lastUnlockTime,
   });
 }

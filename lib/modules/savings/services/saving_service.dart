@@ -16,14 +16,24 @@ class SavingService {
   static String get _uid =>
       FirebaseAuth
           .instance
-          .currentUser!
-          .uid;
+          .currentUser
+          ?.uid ??
+      'guest';
 
-  static CollectionReference get
-      _collection => _firestore
-          .collection('users')
-          .doc(_uid)
-          .collection('savings');
+  static CollectionReference?
+      get _collection {
+    if (FirebaseAuth
+            .instance
+            .currentUser ==
+        null) {
+      return null;
+    }
+
+    return _firestore
+        .collection('users')
+        .doc(_uid)
+        .collection('savings');
+  }
 
   static List<Saving> getAllSavings() {
     return box.values.toList();
@@ -32,41 +42,53 @@ class SavingService {
   static Future<void> addSaving(
     Saving saving,
   ) async {
+    // Sauvegarde locale
     await box.put(
       saving.id,
       saving,
     );
 
-    await _collection
-        .doc(saving.id)
-        .set(
-          saving.toMap(),
-        );
+    // Sauvegarde cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(saving.id)
+          .set(
+            saving.toMap(),
+          );
+    }
   }
 
   static Future<void> updateSaving(
     Saving saving,
   ) async {
+    // Mise à jour locale
     await box.put(
       saving.id,
       saving,
     );
 
-    await _collection
-        .doc(saving.id)
-        .set(
-          saving.toMap(),
-        );
+    // Mise à jour cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(saving.id)
+          .set(
+            saving.toMap(),
+          );
+    }
   }
 
   static Future<void> deleteSaving(
     String id,
   ) async {
+    // Suppression locale
     await box.delete(id);
 
-    await _collection
-        .doc(id)
-        .delete();
+    // Suppression cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(id)
+          .delete();
+    }
   }
 
   static Saving? getSaving(
@@ -81,8 +103,12 @@ class SavingService {
 
   static Future<void>
       syncFromFirestore() async {
+    if (_collection == null) {
+      return;
+    }
+
     final snapshot =
-        await _collection.get();
+        await _collection!.get();
 
     for (final doc
         in snapshot.docs) {

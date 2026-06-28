@@ -16,14 +16,24 @@ class NoteService {
   static String get _uid =>
       FirebaseAuth
           .instance
-          .currentUser!
-          .uid;
+          .currentUser
+          ?.uid ??
+      'guest';
 
-  static CollectionReference get
-      _collection => _firestore
-          .collection('users')
-          .doc(_uid)
-          .collection('notes');
+  static CollectionReference?
+      get _collection {
+    if (FirebaseAuth
+            .instance
+            .currentUser ==
+        null) {
+      return null;
+    }
+
+    return _firestore
+        .collection('users')
+        .doc(_uid)
+        .collection('notes');
+  }
 
   static List<Note> getAllNotes() {
     return box.values.toList();
@@ -32,41 +42,53 @@ class NoteService {
   static Future<void> addNote(
     Note note,
   ) async {
+    // Sauvegarde locale
     await box.put(
       note.id,
       note,
     );
 
-    await _collection
-        .doc(note.id)
-        .set(
-          note.toMap(),
-        );
+    // Sauvegarde cloud si connecté
+    if (_collection != null) {
+      await _collection!
+          .doc(note.id)
+          .set(
+            note.toMap(),
+          );
+    }
   }
 
   static Future<void> updateNote(
     Note note,
   ) async {
+    // Mise à jour locale
     await box.put(
       note.id,
       note,
     );
 
-    await _collection
-        .doc(note.id)
-        .set(
-          note.toMap(),
-        );
+    // Mise à jour cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(note.id)
+          .set(
+            note.toMap(),
+          );
+    }
   }
 
   static Future<void> deleteNote(
     String id,
   ) async {
+    // Suppression locale
     await box.delete(id);
 
-    await _collection
-        .doc(id)
-        .delete();
+    // Suppression cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(id)
+          .delete();
+    }
   }
 
   static Note? getNote(
@@ -81,8 +103,12 @@ class NoteService {
 
   static Future<void>
       syncFromFirestore() async {
+    if (_collection == null) {
+      return;
+    }
+
     final snapshot =
-        await _collection.get();
+        await _collection!.get();
 
     for (final doc
         in snapshot.docs) {

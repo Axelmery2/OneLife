@@ -16,14 +16,24 @@ class CreanceService {
   static String get _uid =>
       FirebaseAuth
           .instance
-          .currentUser!
-          .uid;
+          .currentUser
+          ?.uid ??
+      'guest';
 
-  static CollectionReference get
-      _collection => _firestore
-          .collection('users')
-          .doc(_uid)
-          .collection('creances');
+  static CollectionReference?
+      get _collection {
+    if (FirebaseAuth
+            .instance
+            .currentUser ==
+        null) {
+      return null;
+    }
+
+    return _firestore
+        .collection('users')
+        .doc(_uid)
+        .collection('creances');
+  }
 
   static List<Creance>
       getAllCreances() {
@@ -33,41 +43,53 @@ class CreanceService {
   static Future<void> addCreance(
     Creance creance,
   ) async {
+    // Sauvegarde locale
     await box.put(
       creance.id,
       creance,
     );
 
-    await _collection
-        .doc(creance.id)
-        .set(
-          creance.toMap(),
-        );
+    // Sauvegarde cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(creance.id)
+          .set(
+            creance.toMap(),
+          );
+    }
   }
 
   static Future<void> updateCreance(
     Creance creance,
   ) async {
+    // Mise à jour locale
     await box.put(
       creance.id,
       creance,
     );
 
-    await _collection
-        .doc(creance.id)
-        .set(
-          creance.toMap(),
-        );
+    // Mise à jour cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(creance.id)
+          .set(
+            creance.toMap(),
+          );
+    }
   }
 
   static Future<void> deleteCreance(
     String id,
   ) async {
+    // Suppression locale
     await box.delete(id);
 
-    await _collection
-        .doc(id)
-        .delete();
+    // Suppression cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(id)
+          .delete();
+    }
   }
 
   static Creance? getCreance(
@@ -82,8 +104,12 @@ class CreanceService {
 
   static Future<void>
       syncFromFirestore() async {
+    if (_collection == null) {
+      return;
+    }
+
     final snapshot =
-        await _collection.get();
+        await _collection!.get();
 
     for (final doc
         in snapshot.docs) {

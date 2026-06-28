@@ -16,14 +16,24 @@ class EventService {
   static String get _uid =>
       FirebaseAuth
           .instance
-          .currentUser!
-          .uid;
+          .currentUser
+          ?.uid ??
+      'guest';
 
-  static CollectionReference get
-      _collection => _firestore
-          .collection('users')
-          .doc(_uid)
-          .collection('events');
+  static CollectionReference?
+      get _collection {
+    if (FirebaseAuth
+            .instance
+            .currentUser ==
+        null) {
+      return null;
+    }
+
+    return _firestore
+        .collection('users')
+        .doc(_uid)
+        .collection('events');
+  }
 
   static List<Event> getAllEvents() {
     final events =
@@ -31,7 +41,9 @@ class EventService {
 
     events.sort(
       (a, b) =>
-          a.date.compareTo(b.date),
+          a.date.compareTo(
+            b.date,
+          ),
     );
 
     return events;
@@ -40,41 +52,53 @@ class EventService {
   static Future<void> addEvent(
     Event event,
   ) async {
+    // Sauvegarde locale
     await box.put(
       event.id,
       event,
     );
 
-    await _collection
-        .doc(event.id)
-        .set(
-          event.toMap(),
-        );
+    // Sauvegarde cloud si connecté
+    if (_collection != null) {
+      await _collection!
+          .doc(event.id)
+          .set(
+            event.toMap(),
+          );
+    }
   }
 
   static Future<void> updateEvent(
     Event event,
   ) async {
+    // Mise à jour locale
     await box.put(
       event.id,
       event,
     );
 
-    await _collection
-        .doc(event.id)
-        .set(
-          event.toMap(),
-        );
+    // Mise à jour cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(event.id)
+          .set(
+            event.toMap(),
+          );
+    }
   }
 
   static Future<void> deleteEvent(
     String id,
   ) async {
+    // Suppression locale
     await box.delete(id);
 
-    await _collection
-        .doc(id)
-        .delete();
+    // Suppression cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(id)
+          .delete();
+    }
   }
 
   static Event? getEvent(
@@ -85,8 +109,12 @@ class EventService {
 
   static Future<void>
       syncFromFirestore() async {
+    if (_collection == null) {
+      return;
+    }
+
     final snapshot =
-        await _collection.get();
+        await _collection!.get();
 
     for (final doc
         in snapshot.docs) {

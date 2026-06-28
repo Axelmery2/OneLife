@@ -17,12 +17,82 @@ import '../../settings/pages/settings_page.dart';
 
 import '../../../services/hive_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../../pages/pin_lock_page.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  State<DashboardPage> createState() =>
+      _DashboardPageState();
+}
+
+class _DashboardPageState
+    extends State<DashboardPage>
+    with WidgetsBindingObserver {
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addObserver(
+      this,
+    );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(
+      this,
+    );
+
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(
+    AppLifecycleState state,
+  ) {
+    if (state ==
+        AppLifecycleState.resumed) {
+      final profile =
+          HiveService.getProfileBox()
+              .getAt(0);
+
+      if (profile == null) return;
+
+      if (!profile.pinEnabled) return;
+
+      if (profile.autoLockMinutes ==
+          -1) return;
+
+      if (profile.lastUnlockTime ==
+          null) return;
+
+      final minutes =
+          DateTime.now()
+              .difference(
+                profile.lastUnlockTime!,
+              )
+              .inMinutes;
+
+      if (minutes >=
+          profile.autoLockMinutes) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                const PinLockPage(),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
     final solde =
         TransactionService.getSolde();
 

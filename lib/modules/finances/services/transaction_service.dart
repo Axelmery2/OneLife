@@ -17,14 +17,26 @@ class TransactionService {
   static String get _uid =>
       FirebaseAuth
           .instance
-          .currentUser!
-          .uid;
+          .currentUser
+          ?.uid ??
+      'guest';
 
-  static CollectionReference get
-      _collection => _firestore
-          .collection('users')
-          .doc(_uid)
-          .collection('transactions');
+  static CollectionReference?
+      get _collection {
+    if (FirebaseAuth
+            .instance
+            .currentUser ==
+        null) {
+      return null;
+    }
+
+    return _firestore
+        .collection('users')
+        .doc(_uid)
+        .collection(
+          'transactions',
+        );
+  }
 
   static List<Transaction>
       getAllTransactions() {
@@ -32,7 +44,8 @@ class TransactionService {
         box.values.toList();
 
     transactions.sort(
-      (a, b) => b.createdAt.compareTo(
+      (a, b) => b.createdAt
+          .compareTo(
         a.createdAt,
       ),
     );
@@ -40,47 +53,67 @@ class TransactionService {
     return transactions;
   }
 
-  static Future<void> addTransaction(
+  static Future<void>
+      addTransaction(
     Transaction transaction,
   ) async {
+    // Sauvegarde locale
     await box.put(
       transaction.id,
       transaction,
     );
 
-    await _collection
-        .doc(transaction.id)
-        .set(
-          transaction.toMap(),
-        );
+    // Sauvegarde cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(
+            transaction.id,
+          )
+          .set(
+            transaction.toMap(),
+          );
+    }
   }
 
-  static Future<void> updateTransaction(
+  static Future<void>
+      updateTransaction(
     Transaction transaction,
   ) async {
+    // Mise à jour locale
     await box.put(
       transaction.id,
       transaction,
     );
 
-    await _collection
-        .doc(transaction.id)
-        .set(
-          transaction.toMap(),
-        );
+    // Mise à jour cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(
+            transaction.id,
+          )
+          .set(
+            transaction.toMap(),
+          );
+    }
   }
 
-  static Future<void> deleteTransaction(
+  static Future<void>
+      deleteTransaction(
     String id,
   ) async {
+    // Suppression locale
     await box.delete(id);
 
-    await _collection
-        .doc(id)
-        .delete();
+    // Suppression cloud
+    if (_collection != null) {
+      await _collection!
+          .doc(id)
+          .delete();
+    }
   }
 
-  static Transaction? getTransaction(
+  static Transaction?
+      getTransaction(
     String id,
   ) {
     return box.get(id);
@@ -88,15 +121,20 @@ class TransactionService {
 
   static Future<void>
       syncFromFirestore() async {
+    if (_collection == null) {
+      return;
+    }
+
     final snapshot =
-        await _collection.get();
+        await _collection!.get();
 
     for (final doc
         in snapshot.docs) {
       final transaction =
           Transaction.fromMap(
         doc.data()
-            as Map<String, dynamic>,
+            as Map<String,
+                dynamic>,
       );
 
       await box.put(
@@ -106,10 +144,13 @@ class TransactionService {
     }
   }
 
-  static double getTotalRevenus() {
+  static double
+      getTotalRevenus() {
     return box.values
         .where(
-          (t) => t.type == 'revenu',
+          (t) =>
+              t.type ==
+              'revenu',
         )
         .fold(
           0.0,
@@ -118,10 +159,13 @@ class TransactionService {
         );
   }
 
-  static double getTotalDepenses() {
+  static double
+      getTotalDepenses() {
     return box.values
         .where(
-          (t) => t.type == 'depense',
+          (t) =>
+              t.type ==
+              'depense',
         )
         .fold(
           0.0,
@@ -135,7 +179,8 @@ class TransactionService {
         getTotalDepenses();
   }
 
-  static Future<void> clearAll() async {
+  static Future<void>
+      clearAll() async {
     await box.clear();
   }
 }

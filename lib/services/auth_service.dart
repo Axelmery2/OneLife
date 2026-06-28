@@ -61,19 +61,27 @@ class AuthService {
         return null;
       }
 
-      // Initialisation des boxes Hive
+      // Initialisation Hive
       await HiveService.init();
 
-      // Synchronisation complète
-      await DebtService.syncFromFirestore();
-      await CreanceService.syncFromFirestore();
-      await NoteService.syncFromFirestore();
-      await SavingService.syncFromFirestore();
-      await ProjectService.syncFromFirestore();
-      await TransactionService.syncFromFirestore();
-      await EventService.syncFromFirestore();
+      // Synchronisation en arrière-plan
+      Future(() async {
+        try {
+          await DebtService.syncFromFirestore();
+          await CreanceService.syncFromFirestore();
+          await NoteService.syncFromFirestore();
+          await SavingService.syncFromFirestore();
+          await ProjectService.syncFromFirestore();
+          await TransactionService.syncFromFirestore();
+          await EventService.syncFromFirestore();
+        } catch (e) {
+          print(
+            'Erreur synchronisation : $e',
+          );
+        }
+      });
 
-      // Profil utilisateur Firestore
+      // Mise à jour Firestore
       await _firestore
           .collection('users')
           .doc(user.uid)
@@ -131,7 +139,9 @@ class AuthService {
       return user;
     } catch (e) {
       print(
-          'Erreur Google Sign-In : $e');
+        'Erreur Google Sign-In : $e',
+      );
+
       return null;
     }
   }
