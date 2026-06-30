@@ -39,66 +39,73 @@ class NoteService {
     return box.values.toList();
   }
 
-  static Future<void> addNote(
-    Note note,
-  ) async {
-    // Sauvegarde locale
-    await box.put(
-      note.id,
-      note,
-    );
-
-    // Sauvegarde cloud si connecté
-    if (_collection != null) {
-      await _collection!
-          .doc(note.id)
-          .set(
-            note.toMap(),
-          );
-    }
-  }
-
-  static Future<void> updateNote(
-    Note note,
-  ) async {
-    // Mise à jour locale
-    await box.put(
-      note.id,
-      note,
-    );
-
-    // Mise à jour cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(note.id)
-          .set(
-            note.toMap(),
-          );
-    }
-  }
-
-  static Future<void> deleteNote(
-    String id,
-  ) async {
-    // Suppression locale
-    await box.delete(id);
-
-    // Suppression cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(id)
-          .delete();
-    }
-  }
-
   static Note? getNote(
     String id,
   ) {
     return box.get(id);
   }
 
-  static Future<void> clearAll() async {
-    await box.clear();
+  static Future<void> addNote(
+    Note note,
+  ) async {
+    // Sauvegarde locale immédiate
+    await box.put(
+      note.id,
+      note,
+    );
+
+    // Synchronisation cloud
+    if (_collection != null) {
+      _collection!
+          .doc(note.id)
+          .set(note.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync ajout note : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void> updateNote(
+    Note note,
+  ) async {
+    // Mise à jour locale immédiate
+    await box.put(
+      note.id,
+      note,
+    );
+
+    // Synchronisation cloud
+    if (_collection != null) {
+      _collection!
+          .doc(note.id)
+          .set(note.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync modification note : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void> deleteNote(
+    String id,
+  ) async {
+    // Suppression locale immédiate
+    await box.delete(id);
+
+    // Suppression cloud
+    if (_collection != null) {
+      _collection!
+          .doc(id)
+          .delete()
+          .catchError((e) {
+        print(
+          'Erreur suppression note : $e',
+        );
+      });
+    }
   }
 
   static Future<void>
@@ -107,21 +114,31 @@ class NoteService {
       return;
     }
 
-    final snapshot =
-        await _collection!.get();
+    try {
+      final snapshot =
+          await _collection!.get();
 
-    for (final doc
-        in snapshot.docs) {
-      final note =
-          Note.fromMap(
-        doc.data()
-            as Map<String, dynamic>,
-      );
+      for (final doc
+          in snapshot.docs) {
+        final note =
+            Note.fromMap(
+          doc.data()
+              as Map<String, dynamic>,
+        );
 
-      await box.put(
-        note.id,
-        note,
+        await box.put(
+          note.id,
+          note,
+        );
+      }
+    } catch (e) {
+      print(
+        'Erreur synchronisation notes : $e',
       );
     }
+  }
+
+  static Future<void> clearAll() async {
+    await box.clear();
   }
 }

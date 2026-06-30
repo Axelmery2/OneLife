@@ -18,6 +18,7 @@ class AddProjectDialog extends StatefulWidget {
 
 class _AddProjectDialogState
     extends State<AddProjectDialog> {
+
   late TextEditingController
       _titleController;
 
@@ -63,6 +64,14 @@ class _AddProjectDialogState
         widget.project?['deadline'];
   }
 
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _budgetController.dispose();
+    super.dispose();
+  }
+
   Future<void> selectDate() async {
     final pickedDate =
         await showDatePicker(
@@ -91,9 +100,8 @@ class _AddProjectDialogState
 
     final budget =
         double.tryParse(
-              _budgetController.text,
-            ) ??
-            0;
+      _budgetController.text.trim(),
+    );
 
     if (title.isEmpty) {
       ScaffoldMessenger.of(context)
@@ -101,6 +109,19 @@ class _AddProjectDialogState
         const SnackBar(
           content: Text(
             'Veuillez saisir un titre.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (budget == null ||
+        budget <= 0) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Veuillez saisir un budget valide supérieur à 0.',
           ),
         ),
       );
@@ -154,7 +175,9 @@ class _AddProjectDialogState
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return AlertDialog(
       title: Text(
         isEditing
@@ -167,6 +190,7 @@ class _AddProjectDialogState
           mainAxisSize:
               MainAxisSize.min,
           children: [
+
             TextField(
               controller:
                   _titleController,
@@ -202,11 +226,15 @@ class _AddProjectDialogState
               controller:
                   _budgetController,
               keyboardType:
-                  TextInputType.number,
+                  const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration:
                   const InputDecoration(
                 labelText:
                     'Budget',
+                hintText:
+                    'Ex: 500000',
               ),
             ),
 

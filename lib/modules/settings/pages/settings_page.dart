@@ -104,21 +104,29 @@ Future<void> checkUpdate() async {
       'Version Firebase : $latestVersion',
     );
 
-    if (currentVersion ==
-        latestVersion) {
-      if (!mounted) return;
+   if (currentVersion == latestVersion) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Vous utilisez déjà la dernière version.',
+      ),
+    ),
+  );
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Vous utilisez déjà la dernière version.',
-          ),
-        ),
-      );
+  return;
+}
 
-      return;
-    }
+if (currentVersion.compareTo(latestVersion) > 0) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Vous utilisez une version plus récente.',
+      ),
+    ),
+  );
+
+  return;
+}
 
     if (!mounted) return;
 
@@ -280,9 +288,8 @@ Future<void> checkUpdate() async {
     );
 
     await showDialog(
-      context: context,
-      builder: (_) =>
-          AlertDialog(
+  context: context,
+  builder: (dialogContext) => AlertDialog(
         title: const Text(
           'Modifier le nom',
         ),
@@ -294,7 +301,7 @@ Future<void> checkUpdate() async {
           TextButton(
             onPressed: () =>
                 Navigator.pop(
-              context,
+              dialogContext,
             ),
             child: const Text(
               'Annuler',
@@ -302,23 +309,34 @@ Future<void> checkUpdate() async {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (profile != null) {
-                profile
-                        .displayName =
-                    controller.text;
+  try {
+    if (profile != null) {
+      profile.displayName =
+          controller.text;
 
-                await profile
-                    .save();
-              }
+      await profile.save();
+    }
 
-              if (mounted) {
-                setState(() {});
-              }
+    if (mounted) {
+      setState(() {});
+    }
 
-              Navigator.pop(
-                context,
-              );
-            },
+    Navigator.pop(
+      dialogContext,
+    );
+  } catch (e) {
+    print(e);
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      SnackBar(
+        content: Text(
+          e.toString(),
+        ),
+      ),
+    );
+  }
+},
             child: const Text(
               'Enregistrer',
             ),

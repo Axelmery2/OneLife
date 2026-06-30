@@ -64,22 +64,23 @@ class AuthService {
       // Initialisation Hive
       await HiveService.init();
 
-      // Synchronisation en arrière-plan
-      Future(() async {
-        try {
-          await DebtService.syncFromFirestore();
-          await CreanceService.syncFromFirestore();
-          await NoteService.syncFromFirestore();
-          await SavingService.syncFromFirestore();
-          await ProjectService.syncFromFirestore();
-          await TransactionService.syncFromFirestore();
-          await EventService.syncFromFirestore();
-        } catch (e) {
-          print(
-            'Erreur synchronisation : $e',
-          );
-        }
-      });
+      // Ouvre les boxes du compte connecté
+      await HiveService.openUserBoxes();
+
+      // Synchronisation
+      try {
+        await DebtService.syncFromFirestore();
+        await CreanceService.syncFromFirestore();
+        await NoteService.syncFromFirestore();
+        await SavingService.syncFromFirestore();
+        await ProjectService.syncFromFirestore();
+        await TransactionService.syncFromFirestore();
+        await EventService.syncFromFirestore();
+      } catch (e) {
+        print(
+          'Erreur synchronisation : $e',
+        );
+      }
 
       // Mise à jour Firestore
       await _firestore
@@ -157,14 +158,19 @@ class AuthService {
         profile.cloudConnected =
             false;
 
+        profile.pinEnabled = false;
+        profile.pinCode = null;
+
         await profile.save();
       }
     }
 
-    await HiveService.reset();
-
     await _googleSignIn.signOut();
-
     await _auth.signOut();
+
+    // Retour au mode invité
+    await HiveService.reset();
+    await HiveService.init();
+    await HiveService.openUserBoxes();
   }
 }

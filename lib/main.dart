@@ -100,6 +100,10 @@ Future<void> main() async {
 
   await HiveService.init();
 
+  // Ouvre automatiquement les boxes
+  // du mode invité ou du compte connecté
+  await HiveService.openUserBoxes();
+
   final profileBox =
       HiveService.getProfileBox();
 

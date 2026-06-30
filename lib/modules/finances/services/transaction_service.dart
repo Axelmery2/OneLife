@@ -53,65 +53,6 @@ class TransactionService {
     return transactions;
   }
 
-  static Future<void>
-      addTransaction(
-    Transaction transaction,
-  ) async {
-    // Sauvegarde locale
-    await box.put(
-      transaction.id,
-      transaction,
-    );
-
-    // Sauvegarde cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(
-            transaction.id,
-          )
-          .set(
-            transaction.toMap(),
-          );
-    }
-  }
-
-  static Future<void>
-      updateTransaction(
-    Transaction transaction,
-  ) async {
-    // Mise à jour locale
-    await box.put(
-      transaction.id,
-      transaction,
-    );
-
-    // Mise à jour cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(
-            transaction.id,
-          )
-          .set(
-            transaction.toMap(),
-          );
-    }
-  }
-
-  static Future<void>
-      deleteTransaction(
-    String id,
-  ) async {
-    // Suppression locale
-    await box.delete(id);
-
-    // Suppression cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(id)
-          .delete();
-    }
-  }
-
   static Transaction?
       getTransaction(
     String id,
@@ -120,26 +61,106 @@ class TransactionService {
   }
 
   static Future<void>
+      addTransaction(
+    Transaction transaction,
+  ) async {
+    // Sauvegarde locale immédiate
+    await box.put(
+      transaction.id,
+      transaction,
+    );
+
+    // Synchronisation cloud
+    if (_collection != null) {
+      _collection!
+          .doc(
+            transaction.id,
+          )
+          .set(
+            transaction.toMap(),
+          )
+          .catchError((e) {
+        print(
+          'Erreur sync ajout transaction : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void>
+      updateTransaction(
+    Transaction transaction,
+  ) async {
+    // Mise à jour locale immédiate
+    await box.put(
+      transaction.id,
+      transaction,
+    );
+
+    // Synchronisation cloud
+    if (_collection != null) {
+      _collection!
+          .doc(
+            transaction.id,
+          )
+          .set(
+            transaction.toMap(),
+          )
+          .catchError((e) {
+        print(
+          'Erreur sync modification transaction : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void>
+      deleteTransaction(
+    String id,
+  ) async {
+    // Suppression locale immédiate
+    await box.delete(id);
+
+    // Suppression cloud
+    if (_collection != null) {
+      _collection!
+          .doc(id)
+          .delete()
+          .catchError((e) {
+        print(
+          'Erreur suppression transaction : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void>
       syncFromFirestore() async {
     if (_collection == null) {
       return;
     }
 
-    final snapshot =
-        await _collection!.get();
+    try {
+      final snapshot =
+          await _collection!.get();
 
-    for (final doc
-        in snapshot.docs) {
-      final transaction =
-          Transaction.fromMap(
-        doc.data()
-            as Map<String,
-                dynamic>,
-      );
+      for (final doc
+          in snapshot.docs) {
+        final transaction =
+            Transaction.fromMap(
+          doc.data()
+              as Map<String,
+                  dynamic>,
+        );
 
-      await box.put(
-        transaction.id,
-        transaction,
+        await box.put(
+          transaction.id,
+          transaction,
+        );
+      }
+    } catch (e) {
+      print(
+        'Erreur synchronisation transactions : $e',
       );
     }
   }

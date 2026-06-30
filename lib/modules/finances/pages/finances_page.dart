@@ -459,7 +459,7 @@ class _FinancesPageState
       floatingActionButton:
           FloatingActionButton(
         onPressed: () {
-          showDialog(
+          await showDialog(
             context: context,
             builder: (_) =>
                 AddTransactionDialog(

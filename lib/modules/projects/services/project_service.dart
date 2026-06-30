@@ -40,62 +40,73 @@ class ProjectService {
     return box.values.toList();
   }
 
+  static Project? getProject(
+    String id,
+  ) {
+    return box.get(id);
+  }
+
   static Future<void> addProject(
     Project project,
   ) async {
-    // Sauvegarde locale
+    // Sauvegarde locale immédiate
     await box.put(
       project.id,
       project,
     );
 
-    // Sauvegarde cloud
+    // Synchronisation cloud
     if (_collection != null) {
-      await _collection!
+      _collection!
           .doc(project.id)
-          .set(
-            project.toMap(),
-          );
+          .set(project.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync ajout projet : $e',
+        );
+      });
     }
   }
 
   static Future<void> updateProject(
     Project project,
   ) async {
-    // Mise à jour locale
+    // Mise à jour locale immédiate
     await box.put(
       project.id,
       project,
     );
 
-    // Mise à jour cloud
+    // Synchronisation cloud
     if (_collection != null) {
-      await _collection!
+      _collection!
           .doc(project.id)
-          .set(
-            project.toMap(),
-          );
+          .set(project.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync modification projet : $e',
+        );
+      });
     }
   }
 
   static Future<void> deleteProject(
     String id,
   ) async {
-    // Suppression locale
+    // Suppression locale immédiate
     await box.delete(id);
 
     // Suppression cloud
     if (_collection != null) {
-      await _collection!
+      _collection!
           .doc(id)
-          .delete();
+          .delete()
+          .catchError((e) {
+        print(
+          'Erreur suppression projet : $e',
+        );
+      });
     }
-  }
-
-  static Project? getProject(
-    String id,
-  ) {
-    return box.get(id);
   }
 
   static Future<void>
@@ -104,20 +115,26 @@ class ProjectService {
       return;
     }
 
-    final snapshot =
-        await _collection!.get();
+    try {
+      final snapshot =
+          await _collection!.get();
 
-    for (final doc
-        in snapshot.docs) {
-      final project =
-          Project.fromMap(
-        doc.data()
-            as Map<String, dynamic>,
-      );
+      for (final doc
+          in snapshot.docs) {
+        final project =
+            Project.fromMap(
+          doc.data()
+              as Map<String, dynamic>,
+        );
 
-      await box.put(
-        project.id,
-        project,
+        await box.put(
+          project.id,
+          project,
+        );
+      }
+    } catch (e) {
+      print(
+        'Erreur synchronisation projets : $e',
       );
     }
   }

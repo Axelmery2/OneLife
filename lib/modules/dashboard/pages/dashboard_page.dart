@@ -93,8 +93,7 @@ class _DashboardPageState
   Widget build(
     BuildContext context,
   ) {
-    final solde =
-        TransactionService.getSolde();
+    
 
     
     return Scaffold(
@@ -128,25 +127,33 @@ class _DashboardPageState
     final profile =
         box.getAt(0);
 
-    return Text(
-      'Bonjour ${profile?.displayName ?? "Utilisateur"} 👋',
+   return Column(
+  crossAxisAlignment:
+      CrossAxisAlignment.start,
+  children: [
+    Text(
+      'Bienvenue, ${profile?.displayName ?? "Utilisateur"}',
       style: const TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  },
+  fontSize: 24,
+  fontWeight: FontWeight.bold,
 ),
-            const SizedBox(height: 5),
+    ),
 
-            Text(
-              'Bienvenue dans OneLife',
-              style: TextStyle(
-                color: Colors.grey.shade700,
-                fontSize: 15,
-              ),
-            ),
+    const SizedBox(
+      height: 4,
+    ),
 
+    const Text(
+  'Pilotez votre vie financière avec facilité et efficacité.',
+  style: TextStyle(
+    color: Colors.grey,
+    fontSize: 16,
+  ),
+),
+  ],
+);
+  },
+          ),
             const SizedBox(height: 20),
 
             Container(
@@ -182,17 +189,28 @@ class _DashboardPageState
                     height: 10,
                   ),
 
-                  Text(
-                    '${solde.toStringAsFixed(0)} FCFA',
-                    style:
-                        const TextStyle(
-                      color:
-                          Colors.white,
-                      fontSize: 36,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
+                 ValueListenableBuilder(
+  valueListenable:
+      HiveService.getTransactionsBox()
+          .listenable(),
+  builder: (
+    context,
+    box,
+    child,
+  ) {
+    final solde =
+        TransactionService.getSolde();
+
+    return Text(
+      '${solde.toStringAsFixed(0)} FCFA',
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 36,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  },
+),
                 ],
               ),
             ),

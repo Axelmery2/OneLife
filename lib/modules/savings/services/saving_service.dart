@@ -39,66 +39,73 @@ class SavingService {
     return box.values.toList();
   }
 
-  static Future<void> addSaving(
-    Saving saving,
-  ) async {
-    // Sauvegarde locale
-    await box.put(
-      saving.id,
-      saving,
-    );
-
-    // Sauvegarde cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(saving.id)
-          .set(
-            saving.toMap(),
-          );
-    }
-  }
-
-  static Future<void> updateSaving(
-    Saving saving,
-  ) async {
-    // Mise à jour locale
-    await box.put(
-      saving.id,
-      saving,
-    );
-
-    // Mise à jour cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(saving.id)
-          .set(
-            saving.toMap(),
-          );
-    }
-  }
-
-  static Future<void> deleteSaving(
-    String id,
-  ) async {
-    // Suppression locale
-    await box.delete(id);
-
-    // Suppression cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(id)
-          .delete();
-    }
-  }
-
   static Saving? getSaving(
     String id,
   ) {
     return box.get(id);
   }
 
-  static Future<void> clearAll() async {
-    await box.clear();
+  static Future<void> addSaving(
+    Saving saving,
+  ) async {
+    // Sauvegarde locale immédiate
+    await box.put(
+      saving.id,
+      saving,
+    );
+
+    // Synchronisation cloud en arrière-plan
+    if (_collection != null) {
+      _collection!
+          .doc(saving.id)
+          .set(saving.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync ajout épargne : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void> updateSaving(
+    Saving saving,
+  ) async {
+    // Mise à jour locale immédiate
+    await box.put(
+      saving.id,
+      saving,
+    );
+
+    // Synchronisation cloud
+    if (_collection != null) {
+      _collection!
+          .doc(saving.id)
+          .set(saving.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync modification épargne : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void> deleteSaving(
+    String id,
+  ) async {
+    // Suppression locale immédiate
+    await box.delete(id);
+
+    // Suppression cloud
+    if (_collection != null) {
+      _collection!
+          .doc(id)
+          .delete()
+          .catchError((e) {
+        print(
+          'Erreur suppression épargne : $e',
+        );
+      });
+    }
   }
 
   static Future<void>
@@ -107,21 +114,31 @@ class SavingService {
       return;
     }
 
-    final snapshot =
-        await _collection!.get();
+    try {
+      final snapshot =
+          await _collection!.get();
 
-    for (final doc
-        in snapshot.docs) {
-      final saving =
-          Saving.fromMap(
-        doc.data()
-            as Map<String, dynamic>,
-      );
+      for (final doc
+          in snapshot.docs) {
+        final saving =
+            Saving.fromMap(
+          doc.data()
+              as Map<String, dynamic>,
+        );
 
-      await box.put(
-        saving.id,
-        saving,
+        await box.put(
+          saving.id,
+          saving,
+        );
+      }
+    } catch (e) {
+      print(
+        'Erreur synchronisation épargnes : $e',
       );
     }
+  }
+
+  static Future<void> clearAll() async {
+    await box.clear();
   }
 }

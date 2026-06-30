@@ -49,62 +49,73 @@ class EventService {
     return events;
   }
 
+  static Event? getEvent(
+    String id,
+  ) {
+    return box.get(id);
+  }
+
   static Future<void> addEvent(
     Event event,
   ) async {
-    // Sauvegarde locale
+    // Sauvegarde locale immédiate
     await box.put(
       event.id,
       event,
     );
 
-    // Sauvegarde cloud si connecté
+    // Synchronisation cloud en arrière-plan
     if (_collection != null) {
-      await _collection!
+      _collection!
           .doc(event.id)
-          .set(
-            event.toMap(),
-          );
+          .set(event.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync ajout événement : $e',
+        );
+      });
     }
   }
 
   static Future<void> updateEvent(
     Event event,
   ) async {
-    // Mise à jour locale
+    // Mise à jour locale immédiate
     await box.put(
       event.id,
       event,
     );
 
-    // Mise à jour cloud
+    // Synchronisation cloud
     if (_collection != null) {
-      await _collection!
+      _collection!
           .doc(event.id)
-          .set(
-            event.toMap(),
-          );
+          .set(event.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync modification événement : $e',
+        );
+      });
     }
   }
 
   static Future<void> deleteEvent(
     String id,
   ) async {
-    // Suppression locale
+    // Suppression locale immédiate
     await box.delete(id);
 
     // Suppression cloud
     if (_collection != null) {
-      await _collection!
+      _collection!
           .doc(id)
-          .delete();
+          .delete()
+          .catchError((e) {
+        print(
+          'Erreur suppression cloud : $e',
+        );
+      });
     }
-  }
-
-  static Event? getEvent(
-    String id,
-  ) {
-    return box.get(id);
   }
 
   static Future<void>
@@ -113,20 +124,26 @@ class EventService {
       return;
     }
 
-    final snapshot =
-        await _collection!.get();
+    try {
+      final snapshot =
+          await _collection!.get();
 
-    for (final doc
-        in snapshot.docs) {
-      final event =
-          Event.fromMap(
-        doc.data()
-            as Map<String, dynamic>,
-      );
+      for (final doc
+          in snapshot.docs) {
+        final event =
+            Event.fromMap(
+          doc.data()
+              as Map<String, dynamic>,
+        );
 
-      await box.put(
-        event.id,
-        event,
+        await box.put(
+          event.id,
+          event,
+        );
+      }
+    } catch (e) {
+      print(
+        'Erreur synchronisation Firestore : $e',
       );
     }
   }

@@ -39,66 +39,73 @@ class DebtService {
     return box.values.toList();
   }
 
-  static Future<void> addDebt(
-    Debt debt,
-  ) async {
-    // Sauvegarde locale
-    await box.put(
-      debt.id,
-      debt,
-    );
-
-    // Sauvegarde cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(debt.id)
-          .set(
-            debt.toMap(),
-          );
-    }
-  }
-
-  static Future<void> updateDebt(
-    Debt debt,
-  ) async {
-    // Mise à jour locale
-    await box.put(
-      debt.id,
-      debt,
-    );
-
-    // Mise à jour cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(debt.id)
-          .set(
-            debt.toMap(),
-          );
-    }
-  }
-
-  static Future<void> deleteDebt(
-    String id,
-  ) async {
-    // Suppression locale
-    await box.delete(id);
-
-    // Suppression cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(id)
-          .delete();
-    }
-  }
-
   static Debt? getDebt(
     String id,
   ) {
     return box.get(id);
   }
 
-  static Future<void> clearAll() async {
-    await box.clear();
+  static Future<void> addDebt(
+    Debt debt,
+  ) async {
+    // Sauvegarde locale immédiate
+    await box.put(
+      debt.id,
+      debt,
+    );
+
+    // Synchronisation cloud en arrière-plan
+    if (_collection != null) {
+      _collection!
+          .doc(debt.id)
+          .set(debt.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync ajout dette : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void> updateDebt(
+    Debt debt,
+  ) async {
+    // Mise à jour locale immédiate
+    await box.put(
+      debt.id,
+      debt,
+    );
+
+    // Synchronisation cloud
+    if (_collection != null) {
+      _collection!
+          .doc(debt.id)
+          .set(debt.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync modification dette : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void> deleteDebt(
+    String id,
+  ) async {
+    // Suppression locale immédiate
+    await box.delete(id);
+
+    // Suppression cloud
+    if (_collection != null) {
+      _collection!
+          .doc(id)
+          .delete()
+          .catchError((e) {
+        print(
+          'Erreur suppression cloud : $e',
+        );
+      });
+    }
   }
 
   static Future<void>
@@ -107,21 +114,31 @@ class DebtService {
       return;
     }
 
-    final snapshot =
-        await _collection!.get();
+    try {
+      final snapshot =
+          await _collection!.get();
 
-    for (final doc
-        in snapshot.docs) {
-      final debt =
-          Debt.fromMap(
-        doc.data()
-            as Map<String, dynamic>,
-      );
+      for (final doc
+          in snapshot.docs) {
+        final debt =
+            Debt.fromMap(
+          doc.data()
+              as Map<String, dynamic>,
+        );
 
-      await box.put(
-        debt.id,
-        debt,
+        await box.put(
+          debt.id,
+          debt,
+        );
+      }
+    } catch (e) {
+      print(
+        'Erreur synchronisation Firestore : $e',
       );
     }
+  }
+
+  static Future<void> clearAll() async {
+    await box.clear();
   }
 }

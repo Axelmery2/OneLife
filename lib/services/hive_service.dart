@@ -53,7 +53,9 @@ class HiveService {
         profileBox,
       );
     }
+  }
 
+  static Future<void> openUserBoxes() async {
     if (!Hive.isBoxOpen(
       '${transactionsBox}_$currentUid',
     )) {

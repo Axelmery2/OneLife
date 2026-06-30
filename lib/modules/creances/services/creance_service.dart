@@ -40,66 +40,73 @@ class CreanceService {
     return box.values.toList();
   }
 
-  static Future<void> addCreance(
-    Creance creance,
-  ) async {
-    // Sauvegarde locale
-    await box.put(
-      creance.id,
-      creance,
-    );
-
-    // Sauvegarde cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(creance.id)
-          .set(
-            creance.toMap(),
-          );
-    }
-  }
-
-  static Future<void> updateCreance(
-    Creance creance,
-  ) async {
-    // Mise à jour locale
-    await box.put(
-      creance.id,
-      creance,
-    );
-
-    // Mise à jour cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(creance.id)
-          .set(
-            creance.toMap(),
-          );
-    }
-  }
-
-  static Future<void> deleteCreance(
-    String id,
-  ) async {
-    // Suppression locale
-    await box.delete(id);
-
-    // Suppression cloud
-    if (_collection != null) {
-      await _collection!
-          .doc(id)
-          .delete();
-    }
-  }
-
   static Creance? getCreance(
     String id,
   ) {
     return box.get(id);
   }
 
-  static Future<void> clearAll() async {
-    await box.clear();
+  static Future<void> addCreance(
+    Creance creance,
+  ) async {
+    // Sauvegarde locale immédiate
+    await box.put(
+      creance.id,
+      creance,
+    );
+
+    // Synchronisation cloud en arrière-plan
+    if (_collection != null) {
+      _collection!
+          .doc(creance.id)
+          .set(creance.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync ajout créance : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void> updateCreance(
+    Creance creance,
+  ) async {
+    // Mise à jour locale immédiate
+    await box.put(
+      creance.id,
+      creance,
+    );
+
+    // Synchronisation cloud
+    if (_collection != null) {
+      _collection!
+          .doc(creance.id)
+          .set(creance.toMap())
+          .catchError((e) {
+        print(
+          'Erreur sync modification créance : $e',
+        );
+      });
+    }
+  }
+
+  static Future<void> deleteCreance(
+    String id,
+  ) async {
+    // Suppression locale immédiate
+    await box.delete(id);
+
+    // Suppression cloud
+    if (_collection != null) {
+      _collection!
+          .doc(id)
+          .delete()
+          .catchError((e) {
+        print(
+          'Erreur suppression cloud : $e',
+        );
+      });
+    }
   }
 
   static Future<void>
@@ -108,21 +115,31 @@ class CreanceService {
       return;
     }
 
-    final snapshot =
-        await _collection!.get();
+    try {
+      final snapshot =
+          await _collection!.get();
 
-    for (final doc
-        in snapshot.docs) {
-      final creance =
-          Creance.fromMap(
-        doc.data()
-            as Map<String, dynamic>,
-      );
+      for (final doc
+          in snapshot.docs) {
+        final creance =
+            Creance.fromMap(
+          doc.data()
+              as Map<String, dynamic>,
+        );
 
-      await box.put(
-        creance.id,
-        creance,
+        await box.put(
+          creance.id,
+          creance,
+        );
+      }
+    } catch (e) {
+      print(
+        'Erreur synchronisation Firestore : $e',
       );
     }
+  }
+
+  static Future<void> clearAll() async {
+    await box.clear();
   }
 }
